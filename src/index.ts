@@ -13,14 +13,16 @@ async function nextTick() {
   return new Promise(resolve => process.nextTick(resolve));
 }
 
-export function create_store(name: string, backupInterval = 9e4): {
+interface Xedis {
   set(key: string, value: any, expirationInSeconds?: number): Promise<void>;
   get(key: string): Promise<any>;
   del(key: string): Promise<void>;
   exists(key: string): Promise<boolean>;
   expire(key: string, expirationInSeconds: number): Promise<void>;
   persist(key: string): Promise<void>;
-} {
+}
+
+export function create_store(name: string, backupInterval = 9e4): Xedis {
   const store: {
     [key: string]: {
       value: any, expiration?: Date

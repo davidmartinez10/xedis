@@ -1,6 +1,6 @@
 {
   "name": "xedis",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Persistent RAM storage for Node.js",
   "main": "lib/cjs/mod.js",
   "module": "lib/esm/mod.js",

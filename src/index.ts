@@ -1,7 +1,7 @@
 import os from "os";
 import { sep } from "path";
 import { existsSync, mkdirSync, readFileSync } from "fs";
-import { writeFile } from "fs/promises";
+import { writeFile, appendFile } from "fs/promises";
 
 const xedis_dir = os.homedir() + sep + "xedis";
 
@@ -13,21 +13,31 @@ async function nextTick() {
   return new Promise(resolve => process.nextTick(resolve));
 }
 
-export function create_store(name: string, maxWriteRate = 3e4, backupInterval = 9e4): {
+export function create_store(name: string, backupInterval = 9e4): {
   set(key: string, value: any, expirationInSeconds?: number): Promise<void>;
-  get(key: string): Promise<void>;
+  get(key: string): Promise<any>;
   del(key: string): Promise<void>;
+  exists(key: string): Promise<boolean>;
+  expire(key: string, expirationInSeconds: number): Promise<void>;
+  persist(key: string): Promise<void>;
 } {
-  const store: { [key: string]: string } = {};
-  const store_path = xedis_dir + sep + name + ".json";
+  const store: {
+    [key: string]: {
+      value: any, expiration?: Date
+    }
+  } = {};
+  const expiration_table: { [key: string]: NodeJS.Timeout } = {};
+  const store_path = xedis_dir + sep + name + ".xson";
   const backup_path = xedis_dir + sep + name + ".backup.json";
 
   if (existsSync(store_path)) {
     try {
-      const json = readFileSync(store_path, "utf-8");
+      console.log("Attempting to restore from xson file.");
+      const xson = readFileSync(store_path, "utf-8");
+      const json = `{${xson.substr(0, xson.length - 1)}}`;
       Object.assign(store, JSON.parse(json));
     } catch {
-      console.log("Persistent file corrupted, loading last functioning backup.");
+      console.log("Persistent file corrupted, attempting to load JSON backup.");
       try {
         if (!existsSync(backup_path)) {
           throw Error();
@@ -40,48 +50,43 @@ export function create_store(name: string, maxWriteRate = 3e4, backupInterval = 
     }
   }
 
-  let write_timeout: NodeJS.Timeout & { _destroyed?: boolean };
-  let blocked = false;
-
-  async function debounce_write() {
-    if (!blocked && (!write_timeout || write_timeout._destroyed)) {
-      write_timeout = setTimeout(
-        async function write() {
-          blocked = true;
-          await writeFile(store_path, JSON.stringify(store));
-          blocked = false;
-        },
-        Date.now() + maxWriteRate
-      );
+  Object.entries(store).forEach(function ([key, v]) {
+    const obj = typeof v === "object" ? v : JSON.parse(v);
+    if (obj?.expiration) {
+      const expiration = new Date(obj.expiration).getTime() - Date.now();
+      console.log(expiration);
+      expiration_table[key] = setTimeout(function remove() { del(key); }, expiration);
     }
+  });
+
+  async function writeToDisk(key: string, value: string | null) {
+    if (!key) {
+      return;
+    }
+    const fragment = `"${key}":${value},`;
+    await appendFile(store_path, fragment);
   }
 
   async function backup() {
-    if (!blocked && (!write_timeout || write_timeout._destroyed)) {
-      await writeFile(backup_path, JSON.stringify(store));
-    } else {
-      setTimeout(backup, 500);
-    }
+    await writeFile(backup_path, JSON.stringify(store));
   }
-
   setInterval(backup, backupInterval);
 
   async function set(key: string, value: any, expirationInSeconds?: number) {
     const obj: { value: any; expiration?: Date } = { value };
     if (typeof expirationInSeconds === "number") {
       obj.expiration = new Date(Date.now() + (expirationInSeconds * 1e3));
-      setTimeout(function remove() { del(key); }, expirationInSeconds * 1e3);
+      expiration_table[key] = setTimeout(function remove() { del(key); }, expirationInSeconds * 1e3);
     }
-    store[key] = JSON.stringify(obj);
-    debounce_write();
+    store[key] = obj;
+    await writeToDisk(key, JSON.stringify(obj));
   }
 
   async function get(key: string) {
     try {
-      const { value } = JSON.parse(store[key]);
       await nextTick();
-      return JSON.parse(value);
-    } catch {
+      return JSON.parse(store[key].value);
+    } catch (err) {
       throw Error("The key [" + key + "] does not exist.");
     }
   }
@@ -89,15 +94,32 @@ export function create_store(name: string, maxWriteRate = 3e4, backupInterval = 
   async function del(key: string) {
     try {
       delete store[key];
-      debounce_write();
+      writeToDisk(key, null);
     } catch {
       throw Error("The key [" + key + "] does not exist.");
     }
   }
 
+  async function exists(key: string) {
+    // eslint-disable-next-line no-prototype-builtins
+    return store.hasOwnProperty(key);
+  }
+
+  async function expire(key: string, expirationInSeconds: number) {
+    const value = await get(key);
+    await set(key, value, expirationInSeconds);
+  }
+
+  async function persist(key: string) {
+    clearTimeout(expiration_table[key]);
+  }
+
   return {
     get,
     set,
-    del
+    del,
+    exists,
+    expire,
+    persist
   };
 }

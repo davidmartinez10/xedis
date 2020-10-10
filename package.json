@@ -18,7 +18,10 @@
     "persistent",
     "persistence",
     "object",
-    "node"
+    "node",
+    "cache",
+    "RAM",
+    "memory"
   ],
   "author": "David Martínez",
   "license": "MIT",

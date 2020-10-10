@@ -2,9 +2,9 @@
   "name": "xedis",
   "version": "0.0.2",
   "description": "Persistent RAM storage for Node.js",
-  "main": "lib/cjs/mod.js",
-  "module": "lib/esm/mod.js",
-  "types": "lib/cjs/mod.d.ts",
+  "main": "lib/cjs/index.js",
+  "module": "lib/esm/index.js",
+  "types": "lib/cjs/index.d.ts",
   "unpkg": "lib/",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json",

@@ -1,0 +1,47 @@
+{
+  "name": "xedis",
+  "version": "2.0.2",
+  "description": "Persistent RAM storage for Node.js",
+  "main": "lib/cjs/mod.js",
+  "module": "lib/esm/mod.js",
+  "types": "lib/cjs/mod.d.ts",
+  "unpkg": "lib/",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json",
+    "prepublishOnly": "npm run build",
+    "version": "git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "keywords": [
+    "redis",
+    "store",
+    "persistent",
+    "persistence",
+    "object",
+    "node"
+  ],
+  "author": "David Martínez",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davidmartinez10/xedis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davidmartinez10/xedis/issues"
+  },
+  "homepage": "https://github.com/davidmartinez10/xedis#readme",
+  "devDependencies": {
+    "@types/node": "^14.11.8",
+    "@typescript-eslint/eslint-plugin": "^4.4.0",
+    "@typescript-eslint/parser": "^4.4.0",
+    "eslint": "^7.11.0",
+    "typescript": "^4.0.3"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "dependencies": {},
+  "directories": {
+    "lib": "lib"
+  }
+}

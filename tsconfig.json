@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2018",
-    "module": "esnext",
+    "target": "ES2015",
+    "module": "CommonJS",
     "declaration": true,
-    "outDir": "lib/esm",
+    "outDir": "lib",
     "strict": true,
     "lib": [
       "esnext"

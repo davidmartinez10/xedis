@@ -1,6 +1,9 @@
 import os from "os";
 import { sep } from "path";
 import { existsSync, mkdirSync, readFileSync, promises } from "fs";
+import debug from "debug";
+
+const log = debug("xedis");
 
 const { writeFile, appendFile } = promises;
 
@@ -35,20 +38,21 @@ export function create_store(name: string, backupInterval = 9e4): Xedis {
 
   if (existsSync(store_path)) {
     try {
-      console.log("Attempting to restore from xson file.");
+      log("Attempting to restore from xson file.");
       const xson = readFileSync(store_path, "utf-8");
       const json = `{${xson.substr(0, xson.length - 1)}}`;
       Object.assign(store, JSON.parse(json));
     } catch {
-      console.log("Persistent file corrupted, attempting to load JSON backup.");
+      log("Persistent file corrupted, attempting to load JSON backup.");
       try {
         if (!existsSync(backup_path)) {
           throw Error();
         }
         const backup = readFileSync(backup_path, "utf-8");
         Object.assign(store, JSON.parse(backup));
-      } catch {
-        console.log("Could not recover store from disk. Continuing with an empty object.");
+      } catch (err) {
+        log(err);
+        log("Could not recover store from disk. Continuing with an empty object.");
       }
     }
   }
@@ -57,7 +61,6 @@ export function create_store(name: string, backupInterval = 9e4): Xedis {
     const obj = typeof v === "object" ? v : JSON.parse(v);
     if (obj?.expiration) {
       const expiration = new Date(obj.expiration).getTime() - Date.now();
-      console.log(expiration);
       expiration_table[key] = setTimeout(function remove() { del(key); }, expiration);
     }
   });

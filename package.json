@@ -34,7 +34,6 @@
   },
   "homepage": "https://github.com/davidmartinez10/xedis#readme",
   "devDependencies": {
-    "@types/debug": "^4.1.5",
     "@types/node": "^14.11.8",
     "@typescript-eslint/eslint-plugin": "^4.4.0",
     "@typescript-eslint/parser": "^4.4.0",
@@ -44,9 +43,7 @@
   "files": [
     "lib/**/*"
   ],
-  "dependencies": {
-    "debug": "^4.2.0"
-  },
+  "dependencies": {},
   "directories": {
     "lib": "lib"
   }

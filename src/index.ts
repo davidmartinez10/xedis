@@ -1,7 +1,8 @@
 import os from "os";
 import { sep } from "path";
-import { existsSync, mkdirSync, readFileSync } from "fs";
-import { writeFile, appendFile } from "fs/promises";
+import { existsSync, mkdirSync, readFileSync, promises } from "fs";
+
+const { writeFile, appendFile } = promises;
 
 const xedis_dir = os.homedir() + sep + "xedis";
 
